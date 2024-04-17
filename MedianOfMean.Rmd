@@ -12,6 +12,11 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, echo=FALSE}
+set.seed(1234)
+```
+
+
 # Introduction :
 
 Étant donné un échantillon de données, l'estimateur MoM mélange les points de données puis les divise en k groupes de m données. Ensuite, il calcule la moyenne arithmétique de chaque groupe. Enfin, nous calculons la médiane des moyennes arithmétiques résultantes.
@@ -27,12 +32,9 @@ median_of_means <- function(seq, n) {
   if (n > length(seq)) {
     n <- ceiling(length(seq) / 2)
   }
-  # Diviser seq en k blocs aléatoires
   indic <- rep(1:n, each = floor(length(seq) / n))
   indic <- sample(indic)
-  # Calculer et sauvegarder la moyenne par bloc
   moyennes <- sapply(1:n, function(block) mean(seq[indic == block]))
-  # Retourner la médiane
   return(median(moyennes))
 }
 ```
@@ -50,35 +52,38 @@ rob_median_of_means <- function(seq, n, l) {
 
 Nous allons voir dans les exemples plusieurs cas de figure. Un cas de figure ou la moyenne est connue car on utilise les lois usuelles puis un second cas de figure ou les lois ne seront pas définies et donc la moyenne ne sera pas connue.
 
-## Exemples dont la moyenne est connue :
+### Exemples dont la moyenne est connue :
+
 Dans tous nos exmple, nous allons regarder la mediannes des moyennes calculée avec notre fonction, la moyenne à l'aide de la fonction *mean* de R et l'écart quadratique entre les 2 résultats.
 
+[x] N'utilise pas le nombre de blocks optimal  
+[ ] Utilise le nombre de block optimal
 
 * Loi gaussienne centrée, de variance $\sigma=3$ en 10 blocks 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 M=0
 population1=rnorm(1000,M,3)
 c(median_of_means(population1, 10),mean(population1),(mean(population1) - median_of_means(population1, 10)) ^ 2)
 
 ```
 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 c(rob_median_of_means(population1, 10, 20),mean(population1),(mean(population1) - rob_median_of_means(population1, 10, 20)) ^ 2)
 ```
 La moyenne est 0 pour une loi normale centrée, on voit que l'erreur quadratique de l'estimateur **median_of_mean** est plus élevée que le deuxième estimateur **rob_median_of_mean** 
 
 * Loi gaussienne de moyenne $\mu=4$ et de variance $\sigma=1$ en 10 blocks
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 population2=rnorm(1000,4,1)
 c(median_of_means(population2, 10),mean(population2),(mean(population2) - median_of_means(population2, 10)) ^ 2)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 c(rob_median_of_means(population2, 10, 20),mean(population2),(mean(population2) - rob_median_of_means(population2, 10, 20)) ^ 2)
 ```
 On remarque que l'erreur quadratique est très faible et que les 2 estimateurs **mean** et **median_of_mean** sont relativement proche de la réalité. Ce qui s'explique par le fait que la variance est réduite. On remarque une nouvelle fois que l'estimateur **rob_median_of_mean** est encore significativement plus puissant.
 
-* Loi de Student à k=5 degré de liberté 
+* Loi de Student à k=5 degré de liberté en 10 blocks
 ```{r}
 population3=rt(1000, df=5)
 c(median_of_means(population3, 10),mean(population3),(mean(population3) - median_of_means(population3, 10)) ^ 2)
@@ -89,9 +94,45 @@ c(rob_median_of_means(population3, 10, 20),mean(population3),(mean(population3) 
 ```
 On sait que pour une loi de student de ddl>1, l'espérance est nulle, c'est ce que l'on trouve avec les 2 estimateurs.
 
+[ ]  N'utilise pas le nombre de blocks optimal  
+[x] Utilise le nombre de block optimal
+
+```{r}
+median_of_means_opt <- function(seq, alpha) {
+  n=length(seq)
+  k <- abs(trunc(8*log(1/alpha)))
+  m <- n/k
+  indic <- rep(1:k, each = m)
+  moyennes <- sapply(1:k, function(block) mean(seq[indic == block]))
+  return(median(moyennes))
+}
+
+rob_median_of_means_opt <- function(seq, alpha, l) {
+  res <- replicate(l, median_of_means_opt(seq, alpha))
+  return(mean(res))
+}
+```
+
+* Loi gaussienne centrée, de variance $\sigma=3$ avec une erreur $\alpha=2.5\%$ 
+
+```{r, echo=TRUE}
+alpha=2.5
+population1=rnorm(1000,0,3)
+c(median_of_means_opt(population1, alpha),mean(population1),(mean(population1) - median_of_means_opt(population1, alpha)) ^ 2)
+```
+
+```{r, echo=TRUE}
+c(rob_median_of_means_opt(population1, alpha, 20),mean(population1),(mean(population1) - rob_median_of_means_opt(population1, alpha, 20)) ^ 2)
+```
+
+On remarque que les 2 estimateurs optiaux donnent les même valeurs.
+
 ### Exemples dont la moyenne est inconnue :
 
-* sample de valeures entières comprises entre -2 et 10
+[x] N'utilise pas le nombre de blocks optimal  
+[ ] Utilise le nombre de block optimal
+
+* sample de valeures entières comprises entre -2 et 10 en 10 blocks
 ```{r}
 population_rd1=sample(x = -2:10, size = 1000, replace = TRUE, prob=NULL)
 c(median_of_means(population_rd1, 10),mean(population_rd1),(mean(population_rd1) - median_of_means(population_rd1, 10)) ^ 2)
@@ -101,14 +142,49 @@ c(median_of_means(population_rd1, 10),mean(population_rd1),(mean(population_rd1)
 c(rob_median_of_means(population_rd1, 10, 20),mean(population_rd1),(mean(population_rd1) - rob_median_of_means(population_rd1, 10, 20)) ^ 2)
 ```
 
-* sample de valeures réelles comprises entre -1 et 1 
+* sample de valeures réelles comprises entre -1 et 1 en 10 blocks
 ```{r}
 population_rd2=sample(x = seq(-1,1, by=0.001), size = 1000, replace = TRUE, prob=NULL)
-c(median_of_means(population_rd2, 10),mean(population_rd2),(mean(population_rd2) - median_of_means(population_rd2, 10)) ^ 2)
+c(median_of_means(population_rd2, alpha),mean(population_rd2),(mean(population_rd2) - median_of_means(population_rd2, alpha)) ^ 2)
 ```
 
 ```{r}
-c(rob_median_of_means(population_rd2, 10, 20),mean(population_rd2),(mean(population_rd2) - rob_median_of_means(population_rd2, 10, 20)) ^ 2)
+c(rob_median_of_means(population_rd2, alpha, 20),mean(population_rd2),(mean(population_rd2) - rob_median_of_means(population_rd2, alpha, 20)) ^ 2)
+```
+On remarque que l'estimateur de la médianne des moyennes donne des résultats similaires à la fonction **mean**.
+
+[ ] N'utilise pas le nombre de blocks optimal  
+[x] Utilise le nombre de block optimal
+
+* sample de valeures entières comprises entre -2 et 10 avec une erreur $\alpha=2.5\%$
+```{r}
+c(median_of_means_opt(population_rd1, 10),mean(population_rd1),(mean(population_rd1) - median_of_means_opt(population_rd1, 10)) ^ 2)
 ```
 
+```{r}
+c(rob_median_of_means_opt(population_rd1, 10, 20),mean(population_rd1),(mean(population_rd1) - rob_median_of_means_opt(population_rd1, 10, 20)) ^ 2)
+```
+
+* sample de valeures réelles comprises entre -1 et 1 avec une erreur $\alpha=2.5\%$
+```{r}
+c(median_of_means_opt(population_rd2, 10),mean(population_rd2),(mean(population_rd2) - median_of_means_opt(population_rd2, 10)) ^ 2)
+```
+
+```{r}
+c(rob_median_of_means_opt(population_rd2, 10, 20),mean(population_rd2),(mean(population_rd2) - rob_median_of_means_opt(population_rd2, 10, 20)) ^ 2)
+```
+
+* sample de valeures réelles comprises entre -1 et 1 avec une erreur $\alpha=2.5\%$ et une valeure abberante 
+```{r}
+population_rd3 <- sample(c(runif(1000, -1, 1), 50), 1000, replace = TRUE)
+c(median_of_means_opt(population_rd2, 10),mean(population_rd2),(mean(population_rd2) - median_of_means_opt(population_rd2, 10)) ^ 2)
+```
+
+```{r}
+c(rob_median_of_means_opt(population_rd2, 10, 20),mean(population_rd2),(mean(population_rd2) - rob_median_of_means_opt(population_rd2, 10, 20)) ^ 2)
+```
+
+
 # Conclusion :
+
+On déduit de tout ça qu'avec l'estimateur de la médianne des moyennes on peut estimer de façon significative la moyenne
