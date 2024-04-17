@@ -1,0 +1,65 @@
+---
+title: "Median of mean"
+author: "Arthur TENA"
+date: "17/04/2024"
+output:  
+  html_document:
+    toc: yes
+    number_sections: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction :
+
+Étant donné un échantillon de données, l'estimateur MoM mélange les points de données puis les divise en k groupes de m données. Ensuite, il calcule la moyenne arithmétique de chaque groupe. Enfin, nous calculons la médiane des moyennes arithmétiques résultantes.
+
+Cette technique diminue l'effet des valeurs aberrantes sur l'estimation finale en divisant les données et en ne considérant que la médiane des sous-estimations résultantes. 
+
+# Median of mean :
+
+## Codes :
+
+```{r}
+median_of_means <- function(seq, n) {
+  if (n > length(seq)) {
+    n <- ceiling(length(seq) / 2)
+  }
+  # Diviser seq en k blocs aléatoires
+  indic <- rep(1:n, each = floor(length(seq) / n))
+  indic <- sample(indic)
+  # Calculer et sauvegarder la moyenne par bloc
+  moyennes <- sapply(1:n, function(block) mean(seq[indic == block]))
+  # Retourner la médiane
+  return(median(moyennes))
+}
+```
+
+On améliore un peu l'estimateur en refaisant la même opération plusieurs fois à l'aide de la fonction *replicate* de R et en utilisant la moyenne empirique *mean*.
+```{r}
+rob_median_of_means <- function(seq, n, l) {
+  res <- replicate(l, median_of_means(seq, n))
+  return(mean(res))
+}
+```
+
+
+## Exemples :
+
+Dans tous nos exmple, nous allons regarder la mediannes des moyennes calculée avec notre fonction, la moyenne à l'aide de la fonction *mean* de R et l'écart quadratique entre les 2 résultats.
+
+
+* Loi gaussienne centrée, de variance n=3 en 10 blocks 
+```{r, echo=FALSE}
+M=0
+population1=rnorm(1000,M,3)
+c(median_of_means(population1, 10),mean(population1),(mean(population1) - median_of_means(population1, 10)) ^ 2)
+
+```
+
+```{r, echo=FALSE}
+c(rob_median_of_means(population1, 10, 20),mean(population1),(mean(population1) - rob_median_of_means(population1, 10, 20)) ^ 2)
+```
+La moyenne est `r M` pour une loi normale, on voit que l'erreur quadratique de l'estimateur **median_of_mean** est plus élevée que le deuxième estimateur **rob_median_of_mean** 
