@@ -37,7 +37,7 @@ median_of_means <- function(seq, n) {
 }
 ```
 
-On améliore un peu l'estimateur en refaisant la même opération plusieurs fois à l'aide de la fonction *replicate* de R et en utilisant la moyenne empirique *mean*.
+On améliore un peu l'estimateur en refaisant la même opération plusieurs fois à l'aide de la fonction *replicate* de R l fois et en utilisant la moyenne empirique *mean*.
 ```{r}
 rob_median_of_means <- function(seq, n, l) {
   res <- replicate(l, median_of_means(seq, n))
@@ -48,10 +48,13 @@ rob_median_of_means <- function(seq, n, l) {
 
 ## Exemples :
 
+Nous allons voir dans les exemples plusieurs cas de figure. Un cas de figure ou la moyenne est connue car on utilise les lois usuelles puis un second cas de figure ou les lois ne seront pas définies et donc la moyenne ne sera pas connue.
+
+## Exemples dont la moyenne est connue :
 Dans tous nos exmple, nous allons regarder la mediannes des moyennes calculée avec notre fonction, la moyenne à l'aide de la fonction *mean* de R et l'écart quadratique entre les 2 résultats.
 
 
-* Loi gaussienne centrée, de variance n=3 en 10 blocks 
+* Loi gaussienne centrée, de variance $\sigma=3$ en 10 blocks 
 ```{r, echo=FALSE}
 M=0
 population1=rnorm(1000,M,3)
@@ -62,4 +65,50 @@ c(median_of_means(population1, 10),mean(population1),(mean(population1) - median
 ```{r, echo=FALSE}
 c(rob_median_of_means(population1, 10, 20),mean(population1),(mean(population1) - rob_median_of_means(population1, 10, 20)) ^ 2)
 ```
-La moyenne est `r M` pour une loi normale, on voit que l'erreur quadratique de l'estimateur **median_of_mean** est plus élevée que le deuxième estimateur **rob_median_of_mean** 
+La moyenne est 0 pour une loi normale centrée, on voit que l'erreur quadratique de l'estimateur **median_of_mean** est plus élevée que le deuxième estimateur **rob_median_of_mean** 
+
+* Loi gaussienne de moyenne $\mu=4$ et de variance $\sigma=1$ en 10 blocks
+```{r, echo=FALSE}
+population2=rnorm(1000,4,1)
+c(median_of_means(population2, 10),mean(population2),(mean(population2) - median_of_means(population2, 10)) ^ 2)
+```
+
+```{r, echo=FALSE}
+c(rob_median_of_means(population2, 10, 20),mean(population2),(mean(population2) - rob_median_of_means(population2, 10, 20)) ^ 2)
+```
+On remarque que l'erreur quadratique est très faible et que les 2 estimateurs **mean** et **median_of_mean** sont relativement proche de la réalité. Ce qui s'explique par le fait que la variance est réduite. On remarque une nouvelle fois que l'estimateur **rob_median_of_mean** est encore significativement plus puissant.
+
+* Loi de Student à k=5 degré de liberté 
+```{r}
+population3=rt(1000, df=5)
+c(median_of_means(population3, 10),mean(population3),(mean(population3) - median_of_means(population3, 10)) ^ 2)
+```
+
+```{r}
+c(rob_median_of_means(population3, 10, 20),mean(population3),(mean(population3) - rob_median_of_means(population3, 10, 20)) ^ 2)
+```
+On sait que pour une loi de student de ddl>1, l'espérance est nulle, c'est ce que l'on trouve avec les 2 estimateurs.
+
+### Exemples dont la moyenne est inconnue :
+
+* sample de valeures entières comprises entre -2 et 10
+```{r}
+population_rd1=sample(x = -2:10, size = 1000, replace = TRUE, prob=NULL)
+c(median_of_means(population_rd1, 10),mean(population_rd1),(mean(population_rd1) - median_of_means(population_rd1, 10)) ^ 2)
+```
+
+```{r}
+c(rob_median_of_means(population_rd1, 10, 20),mean(population_rd1),(mean(population_rd1) - rob_median_of_means(population_rd1, 10, 20)) ^ 2)
+```
+
+* sample de valeures réelles comprises entre -1 et 1 
+```{r}
+population_rd2=sample(x = seq(-1,1, by=0.001), size = 1000, replace = TRUE, prob=NULL)
+c(median_of_means(population_rd2, 10),mean(population_rd2),(mean(population_rd2) - median_of_means(population_rd2, 10)) ^ 2)
+```
+
+```{r}
+c(rob_median_of_means(population_rd2, 10, 20),mean(population_rd2),(mean(population_rd2) - rob_median_of_means(population_rd2, 10, 20)) ^ 2)
+```
+
+# Conclusion :
