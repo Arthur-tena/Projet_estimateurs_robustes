@@ -59,7 +59,7 @@ Dans tous nos exmple, nous allons regarder la mediannes des moyennes calculée a
 [x] N'utilise pas le nombre de blocks optimal  
 [ ] Utilise le nombre de block optimal
 
-* Loi gaussienne centrée, de variance $\sigma=3$ en 10 blocks 
+* Loi gaussienne centrée, de variance $\sigma^2=3$ en 10 blocks 
 ```{r, echo=TRUE}
 M=0
 population1=rnorm(1000,M,3)
@@ -72,7 +72,7 @@ c(rob_median_of_means(population1, 10, 20),mean(population1),(mean(population1) 
 ```
 La moyenne est 0 pour une loi normale centrée, on voit que l'erreur quadratique de l'estimateur **median_of_mean** est plus élevée que le deuxième estimateur **rob_median_of_mean** 
 
-* Loi gaussienne de moyenne $\mu=4$ et de variance $\sigma=1$ en 10 blocks
+* Loi gaussienne de moyenne $\mu=4$ et de variance $\sigma^2=1$ en 10 blocks
 ```{r, echo=TRUE}
 population2=rnorm(1000,4,1)
 c(median_of_means(population2, 10),mean(population2),(mean(population2) - median_of_means(population2, 10)) ^ 2)
@@ -116,7 +116,7 @@ rob_median_of_means_opt <- function(seq, alpha, l) {
 Ici je cherche le coefficient qui minimisera l'erreur
 
 ```{r}
-median_of_means_opt <- function(alpha) {
+median_of_means_opt2 <- function(alpha) {
   population1=rnorm(1000,0,3)
   n=length(population1)
   vec=c()
@@ -129,9 +129,8 @@ median_of_means_opt <- function(alpha) {
   }
   return(vec)
 }
-median_of_means_opt(0.025)
 
-median_of_means_opt <- function(seq, alpha, i) {
+median_of_means_opt3 <- function(seq, alpha, i) {
   n <- length(seq)
   k <- abs(trunc(i * log(1/alpha)))
   m <- n / k
@@ -143,8 +142,8 @@ median_of_means_opt <- function(seq, alpha, i) {
 population1 <- rnorm(1000, 0, 1)
 alpha <- 0.025
 i_values <- 1:10
-median_values <- sapply(i_values, function(i) median_of_means_opt(population1, alpha, i))
-plot(x = i_values, y = median_values, type = "l", xlab = "i", ylab = "Median of Means")
+median_values <- sapply(i_values, function(i) median_of_means_opt3(population1, alpha, i))
+plot(x = i_values, y = median_values, type = "l", xlab = "i", ylab = "Median of Means", main ="Estimateur MoM d'une loi normale centrée réduite")
 abline(h=0, col='red')
 ```
 
