@@ -113,6 +113,43 @@ rob_median_of_means_opt <- function(seq, alpha, l) {
 }
 ```
 
+Ici je cherche le coefficient qui minimisera l'erreur
+
+```{r}
+median_of_means_opt <- function(alpha) {
+  population1=rnorm(1000,0,3)
+  n=length(population1)
+  vec=c()
+  for (i in 1:10){
+    k <- abs(trunc(i*log(1/alpha)))
+    m <- n/k
+    indic <- rep(1:k, each = m)
+    moyennes <- sapply(1:k, function(block) mean(population1[indic == block]))
+    vec[i]=median(moyennes)
+  }
+  return(vec)
+}
+median_of_means_opt(0.025)
+
+median_of_means_opt <- function(seq, alpha, i) {
+  n <- length(seq)
+  k <- abs(trunc(i * log(1/alpha)))
+  m <- n / k
+  indic <- rep(1:k, each = m)
+  moyennes <- sapply(1:k, function(block) mean(seq[indic == block]))
+  return(median(moyennes))
+}
+
+population1 <- rnorm(1000, 0, 1)
+alpha <- 0.025
+i_values <- 1:10
+median_values <- sapply(i_values, function(i) median_of_means_opt(population1, alpha, i))
+plot(x = i_values, y = median_values, type = "l", xlab = "i", ylab = "Median of Means")
+abline(h=0, col='red')
+```
+
+
+
 * Loi gaussienne centrée, de variance $\sigma=3$ avec une erreur $\alpha=2.5\%$ 
 
 ```{r, echo=TRUE}
