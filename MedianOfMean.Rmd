@@ -98,16 +98,16 @@ On sait que pour une loi de student de ddl>1, l'espérance est nulle, c'est ce q
 [x] Utilise le nombre de block optimal
 
 ```{r}
-median_of_means_opt <- function(seq, alpha) {
+median_of_means_opt <- function(seq, alpha=0.025) {
   n=length(seq)
-  k <- abs(trunc(8*log(1/alpha)))
+  k <- (trunc(8*log(1/alpha)))
   m <- n/k
   indic <- rep(1:k, each = m)
   moyennes <- sapply(1:k, function(block) mean(seq[indic == block]))
   return(median(moyennes))
 }
 
-rob_median_of_means_opt <- function(seq, alpha, l) {
+rob_median_of_means_opt <- function(seq, alpha=0.025, l) {
   res <- replicate(l, median_of_means_opt(seq, alpha))
   return(mean(res))
 }
@@ -132,7 +132,7 @@ median_of_means_opt2 <- function(alpha) {
 
 median_of_means_opt3 <- function(seq, alpha, i) {
   n <- length(seq)
-  k <- abs(trunc(i * log(1/alpha)))
+  k <- trunc(i * log(1/alpha))
   m <- n / k
   indic <- rep(1:k, each = m)
   moyennes <- sapply(1:k, function(block) mean(seq[indic == block]))
@@ -149,10 +149,10 @@ abline(h=0, col='red')
 
 
 
-* Loi gaussienne centrée, de variance $\sigma=3$ avec une erreur $\alpha=2.5\%$ 
+* Loi gaussienne centrée, de variance $\sigma^2=3$ avec une erreur $\alpha=2.5\%$ 
 
 ```{r, echo=TRUE}
-alpha=2.5
+alpha=0.025
 population1=rnorm(1000,0,3)
 c(median_of_means_opt(population1, alpha),mean(population1),(mean(population1) - median_of_means_opt(population1, alpha)) ^ 2)
 ```
@@ -160,6 +160,41 @@ c(median_of_means_opt(population1, alpha),mean(population1),(mean(population1) -
 ```{r, echo=TRUE}
 c(rob_median_of_means_opt(population1, alpha, 20),mean(population1),(mean(population1) - rob_median_of_means_opt(population1, alpha, 20)) ^ 2)
 ```
+
+
+```{r}
+alpha=0.025
+c(median_of_means_opt(population3, alpha),mean(population3),(mean(population3) - median_of_means_opt(population3, alpha)) ^ 2)
+
+c(rob_median_of_means_opt(population3, alpha, 20),mean(population3),(mean(population3) - rob_median_of_means_opt(population3, alpha, 20)) ^ 2)
+```
+
+
+
+Intervalle de confiance à l'aide d'une méthode de bootstrap
+```{r}
+bootstrap_IC <- function(data, alpha=0.025, R=1000) {
+  bootstrap_estimates <- replicate(R, {
+    sample_data <- sample(data, replace = TRUE)
+    median_of_means_opt(sample_data, alpha)
+  })
+  
+  lower_bound <- quantile(bootstrap_estimates, 0.025)
+  upper_bound <- quantile(bootstrap_estimates, 0.975)
+  
+  return(c(lower_bound, upper_bound))
+}
+
+population1 <- rnorm(1000, 0, 3)
+
+ci <- bootstrap_IC(population1)
+taille <- abs(ci[2]-ci[1])
+
+ci
+taille
+```
+
+
 
 On remarque que les 2 estimateurs optiaux donnent les même valeurs.
 
@@ -194,7 +229,7 @@ On remarque que l'estimateur de la médianne des moyennes donne des résultats s
 
 * sample de valeures entières comprises entre -2 et 10 avec une erreur $\alpha=2.5\%$
 ```{r}
-c(median_of_means_opt(population_rd1, 10),mean(population_rd1),(mean(population_rd1) - median_of_means_opt(population_rd1, 10)) ^ 2)
+c(median_of_means_opt(population_rd1, alpha),mean(population_rd1),(mean(population_rd1) - median_of_means_opt(population_rd1, alpha)) ^ 2)
 ```
 
 ```{r}
