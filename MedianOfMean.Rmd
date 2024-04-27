@@ -154,7 +154,11 @@ abline(h=0, col='red')
 ```{r, echo=TRUE}
 alpha=0.025
 population1=rnorm(1000,0,3)
-c(median_of_means_opt(population1, alpha),mean(population1),(mean(population1) - median_of_means_opt(population1, alpha)) ^ 2)
+#c(median_of_means_opt(population1, alpha),mean(population1),(mean(population1) - median_of_means_opt(population1, alpha)) ^ 2)
+IC=c(median_of_means_opt(population1)-2.24*sqrt(var(population1)/length(population1)),median_of_means_opt(population1),median_of_means_opt(population1)+2.24*sqrt(var(population1)/length(population1)))
+IC
+taille=IC[3]-IC[1]
+taille
 ```
 
 ```{r, echo=TRUE}
@@ -187,8 +191,14 @@ bootstrap_IC <- function(data, alpha=0.025, R=1000) {
 
 population1 <- rnorm(1000, 0, 3)
 
-ci <- bootstrap_IC(population1)
+
+ci <- bootstrap_IC(population4)
+ci2 <- bootstrap_IC(population5)
 taille <- abs(ci[2]-ci[1])
+taille2 <- abs(ci2[2]-ci2[1])
+
+ci2
+taille2  
 
 ci
 taille
@@ -197,6 +207,25 @@ taille
 
 
 On remarque que les 2 estimateurs optiaux donnent les même valeurs.
+
+* Loi log-normale avec $\mu=0$ et $\sigma^2=1$
+
+```{r}
+population4=rlnorm(n = 100000, meanlog = 0, sdlog = 1)
+c(median_of_means_opt(population4, alpha),mean(population4),(mean(population4) - median_of_means_opt(population4, alpha)) ^ 2)
+#IC=c(median_of_means_opt(population4)-2.24*sqrt(var(population4)/length(population4)),median_of_means_opt(population4#),median_of_means_opt(population4)+2.24*sqrt(var(population4)/length(population4)))
+#IC
+#taille=IC[3]-IC[1]
+#taille
+```
+
+
+```{r}
+population5=rweibull(n = 1000, shape = 0.5)
+c(median_of_means_opt(population5, alpha),mean(population5),(mean(population5) - median_of_means_opt(population5, alpha)) ^ 2)
+```
+
+
 
 ### Exemples dont la moyenne est inconnue :
 
@@ -259,3 +288,61 @@ c(rob_median_of_means_opt(population_rd2, 10, 20),mean(population_rd2),(mean(pop
 # Conclusion :
 
 On déduit de tout ça qu'avec l'estimateur de la médianne des moyennes on peut estimer de façon significative la moyenne
+
+
+```{r}
+x <- seq(from = 0.01, to = 1, by = 0.001)
+y <- trunc(8 * log(1 / x))
+
+plot(x = x, y = y, type = "l", col = "blue", ylim = c(0, 40), 
+     main = "nombre de blocks en fonction de la valeur de alpha", xlab = "valeur de alpha", ylab = "nb de blocks")
+
+```
+
+
+
+```{r}
+median_of_means_opt2 <- function(X, alpha=0.025) {
+  n=length(X)
+  k <- (trunc(8*log(1/alpha)))
+  m <- n/k
+  indic <- rep(1:k, each = m)
+  indic <- sample(indic)
+  moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
+  return(median(moyennes))
+}
+
+rob_median_of_means_opt <- function(X, alpha=0.025, l) {
+  res <- replicate(l, median_of_means_opt2(X, alpha))
+  return(mean(res))
+}
+
+
+plot_intervalle <- function(X) {
+  alpha <- 0.025
+  n <- length(X)
+  k <- trunc(8 * log(1 / alpha))
+  m <- n / k
+  sigma <- sqrt(var(X))
+  
+  Y <- matrix(NA, nrow = 10000, ncol = 3)
+  
+  for (i in 1:10000) {
+    hat_mu <- median_of_means_opt2(X)
+    
+    y_min <- hat_mu - sigma * sqrt(4 / m)
+    y_max <- hat_mu + sigma * sqrt(4 / m)
+    taille=y_max-y_min
+    
+    Y[i, ] <- c(y_min, y_max, taille)
+  }
+  print(Y)
+  plot(Y[, 1], type = "l", ylim = range(Y), col = "blue", main = "Intervalles de confiance", xlab = "Index", ylab = "Valeurs")
+  points(Y[, 2], type = "l", col="blue")
+  
+  abline(h = hat_mu, col = "red")
+}
+X=rexp(n = 1000, rate=1)
+plot_intervalle(X)
+```
+
