@@ -2,35 +2,7 @@ using Statistics
 using Random
 using Distributions
 
-# Générer des données suivant une distribution de Pareto
-function generate_pareto_data(n, β, xmin)
-    u = rand(n)
-    return xmin ./ (u .^ (1/β))
-end
-
-# Paramètres de la distribution de Pareto
-n = 500          # Taille de l'échantillon
-β = 1.5           # Paramètre de forme (doit être > 1)
-xmin = 2.0        # Paramètre de position
-
-data=generate_pareto_data(n,α,xmin)
-#Loi normale N(0,1)
-
-
-# Générer 1000 nombres aléatoires selon une distribution normale standard (moyenne = 0, écart-type = 1)
-normale_standard = randn(1000)
-
-# Générer une distribution normale avec moyenne 5 et écart-type 2
-moyenne = 0
-ecart_type = 1
-normale_custom = moyenne .+ ecart_type .* normale_standard
-
-data1=normale_custom
-
-
-
-# Générer les données
-data = generate_pareto_data(n, α, xmin)
+Pareto(3)
 
 function median_of_means_opt(seq, alpha=0.025)
     if alpha <= 0 || alpha > 1
@@ -48,7 +20,7 @@ end
 median_of_means_opt(data,0.15)
 
 #Plot pour les estimateurs en fonctions de alpha
-
+seq=data
 alphas = collect(0.001:0.001:0.1)  # Choisir une plage d'alpha
 estimates = [median_of_means_opt(seq, alpha) for alpha in alphas]
 
@@ -100,9 +72,6 @@ median_of_means(data,5)
 
 
 
-using Statistics, Plots
-
-using Statistics, Plots
 
 function median_of_means_opt(seq, alpha=0.025)
     n = length(seq)
@@ -113,26 +82,6 @@ function median_of_means_opt(seq, alpha=0.025)
 end
 
 median_of_means_opt(data,0.99)
-
-alpha = 0.025  # Valeur alpha pour le calcul de k
-k = abs(trunc(Int, 8 * log(1 / alpha)))  # Calcul de k
-m = 50  # Nombre de membres par groupe
-ns = k .* m  # Taille de l'échantillon
-x_bar = Float64[]
-mom_opt = Float64[]
-
-for n in ns
-    x = rand(TDist(1.5), n)  # Génère des échantillons à partir d'une distribution t de Student avec df=1.5 et taille d'échantillon n
-    push!(x_bar, mean(x))  # Calcule la moyenne empirique des échantillons générés et l'ajoute à x_bar
-    push!(mom_opt, median_of_means_opt(x))  # Calcule l'estimation de la moyenne des moments optimal et l'ajoute à mom_opt
-end
-
-plot(ns, x_bar, label="empirical mean")  # Trace la moyenne empirique en fonction de la taille de l'échantillon
-plot!(ns, mom_opt, label="mom_opt")  # Trace l'estimation de la moyenne des moments optimal en fonction de la taille de l'échantillon
-xlabel!("Taille de l'échantillon")
-ylabel!("Valeur")
-title!("Comparaison entre la moyenne empirique et l'estimation de la moyenne des moments optimal")
-
 
 
 
