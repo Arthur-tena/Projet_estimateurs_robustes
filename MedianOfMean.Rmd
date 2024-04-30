@@ -116,20 +116,7 @@ rob_median_of_means_opt <- function(X, alpha=0.025, l) {
 Ici je cherche le coefficient qui minimisera l'erreur
 
 ```{r}
-median_of_means_opt2 <- function(alpha) {
-  population1=rnorm(1000,0,3)
-  n=length(population1)
-  vec=c()
-  for (i in 1:10){
-    k <- abs(trunc(i*log(1/alpha)))
-    m <- n/k
-    indic <- rep(1:k, each = m)
-    moyennes <- sapply(1:k, function(block) mean(population1[indic == block]))
-    vec[i]=median(moyennes)
-  }
-  return(vec)
-}
-
+library("ggplot2")
 median_of_means_opt3 <- function(X, alpha, i) {
   n <- length(X)
   k <- trunc(i * log(1/alpha))
@@ -140,13 +127,53 @@ median_of_means_opt3 <- function(X, alpha, i) {
   return(median(moyennes))
 }
 
-population1 <- rnorm(1000, 0, 1)
+population1 <- rexp(10000, 2)
 alpha <- 0.025
 i_values <- 1:30
 median_values <- sapply(i_values, function(i) median_of_means_opt3(population1, alpha, i))
+data=as.data.frame(cbind(i_values,median_values))
+ggplot(data = data, aes(x = i_values, y = median_values)) +
+  geom_point() +
+  geom_hline(yintercept = 1/2, linetype = "dashed", color = "blue") +
+  geom_vline(xintercept = 8, color = "red") +
+  geom_vline(xintercept = i_values[which.min(abs(median_values - 0.5))], color = "green") +
+  labs(x = "c", y = "Median of Means", title = "Estimateur MoM d'une loi exp(2)") +
+  geom_text(x = 7, y = 0.491, label = "c_theo", color = "red", vjust = 0.5) +
+  geom_text(x = i_values[which.min(abs(median_values - 0.5))]-1, y = 0.491, label = "c_opt", color = "green", vjust = 0.5) +
+  theme_classic()
 plot(x = i_values, y = median_values, type = "l", xlab = "i", ylab = "Median of Means", main ="Estimateur MoM d'une loi normale centrée réduite")
-abline(h=0, col='red')
+abline(h=1/2, col='red')
+abline(v=8, lty=2, col='blue')
 ```
+
+```{r}
+library("VGAM")
+population2 <- rpareto(1000, 1.5, 1.5)
+alpha <- 0.025
+i_values <- 1:30
+median_values <- sapply(i_values, function(i) median_of_means_opt3(population2, alpha, i))
+data=as.data.frame(cbind(i_values,median_values))
+ggplot(data = data, aes(x = i_values, y = median_values)) +
+  geom_point() +
+  geom_hline(yintercept = 4.5, linetype = "dashed", color = "blue") +
+  geom_vline(xintercept = 8, color = "red") +
+  geom_vline(xintercept = i_values[which.min(abs(median_values - 4.5))], color = "green") +
+  labs(x = "c", y = "Median of Means", title = "Estimateur MoM d'une loi pareto(1.5,1.5)") +
+  geom_text(x = 7, y = 0.491, label = "c_theo", color = "red", vjust = 0.5) +
+  geom_text(x = i_values[which.min(abs(median_values - 4.5))]-1, y = 0.491, label = "c_opt", color = "green", vjust = 0.5) +
+  theme_classic()
+plot(x = i_values, y = median_values, type = "l", xlab = "i", ylab = "Median of Means", main ="Estimateur MoM d'une loi de pareto(1.5,1.5)")
+abline(h=4.5, col='red')
+abline(v=8, lty=2, col='blue')
+print(i_values[which.min(abs(median_values - 4.5))])
+```
+
+
+
+
+
+
+
 
 
 
@@ -318,7 +345,7 @@ plot_intervalle <- function(X) {
   n <- length(X)
   k <- trunc(8 * log(1 / alpha))
   m <- n / k
-  sigma <- sqrt(var(X))
+  sigma <- 1
   
   Y <- matrix(NA, nrow = 10000, ncol = 5)
   
@@ -330,7 +357,7 @@ plot_intervalle <- function(X) {
     
     taille=y_max-y_min
     
-    Y[i, ] <- c(hat_mu,y_min, y_max, taille, hat_mu-mean(X))
+    Y[i, ] <- c(hat_mu,y_min, y_max, taille, abs(hat_mu-1))
   }
   
   plot(Y[, 2], type = "l", ylim = range(Y), col = "blue", main = "Intervalles de confiance", xlab = "Index", ylab = "Valeurs")
@@ -340,7 +367,7 @@ plot_intervalle <- function(X) {
   names(Y) <- c("MoM", "y_min", "y_max", "taille", "MoM-mean")
   print(Y)
   print(sigma*sqrt((32*log(1/alpha))/n))
-  print(sum(abs(Y[, 5]) <=sigma*sqrt((32*log(1/alpha))/n)))
+  print(sum(Y[, 5] <=sigma*sqrt((32*log(1/alpha))/n)))
 }
 X1=rexp(n = 1000, rate=1)
 X2=rweibull(n = 1000, shape = 0.5)
