@@ -103,6 +103,7 @@ median_of_means_opt <- function(X, alpha=0.025) {
   k <- (trunc(8*log(1/alpha)))
   m <- n/k
   indic <- rep(1:k, each = m)
+  indic <- sample(indic)
   moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
   return(median(moyennes))
 }
@@ -419,3 +420,30 @@ plot_int=function(X,k){
 X1=rexp(n = 1000, rate=1)
 plot_int(X1, 25)
 ```
+
+
+```{r}
+median_of_means_Minsker <- function(X, k) {
+  n <- length(X)
+  if (k > n) {
+    k <- ceiling(length(X) / 2)
+  }
+  indic <- combn(X, trunc(n/k))
+  moyennes <- apply(indic, 2, mean)
+  return(median(moyennes))
+}
+
+X4 <- rexp(n = 20, rate = 1/2)
+result <- median_of_means_Minsker(X4, 3)
+print(result)
+
+
+# Calculer la médiane des moyennes pour différentes valeurs de k
+x <- 1:7
+y <- sapply(x, function(k) median_of_means_Minsker(X4, k))
+
+# Tracer la médiane des moyennes en fonction de k
+plot(x = x, y = y, type = "b", xlab = "k", ylab = "Median of Means", main = "Median of Means suivant le nombre de blocks k")
+
+```
+
