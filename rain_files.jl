@@ -12,3 +12,17 @@ ylims!(1e-4,1)
 yaxis!(:log10)
 xlabel!("Rain/day (mm/m²)")
 ylabel!("PDF")
+
+mean(df.RR)
+
+# Focus only on 1 day of the year to have 78 i.i.d data
+
+date_extreme = @subset(df, :RR .> 200).DATE[1]
+iid_data =  @subset(df, monthday.(:DATE) .== monthday.(date_extreme))
+@df iid_data stephist(:RR, norm = :pdf)
+ylims!(1e-4,1)
+yaxis!(:log10)
+xlabel!("Rain/day (mm/m²)")
+ylabel!("PDF")
+
+mean(iid_data.RR)
