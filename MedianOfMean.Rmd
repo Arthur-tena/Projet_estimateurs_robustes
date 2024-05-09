@@ -128,7 +128,9 @@ median_of_means_opt3 <- function(X, alpha, i) {
   return(median(moyennes))
 }
 
-population1 <- rexp(10000, 2)
+population1 <- rexp(10000, 0.2)
+rob_median_of_means_opt(population1,0.025, 1000)
+population1
 alpha <- 0.025
 i_values <- 1:30
 median_values <- sapply(i_values, function(i) median_of_means_opt3(population1, alpha, i))
@@ -138,7 +140,7 @@ ggplot(data = data, aes(x = i_values, y = median_values)) +
   geom_hline(yintercept = 1/2, linetype = "dashed", color = "blue") +
   geom_vline(xintercept = 8, color = "red") +
   geom_vline(xintercept = i_values[which.min(abs(median_values - 0.5))], color = "green") +
-  labs(x = "c", y = "Median of Means", title = "Estimateur MoM d'une loi exp(2)") +
+  labs(x = "c", y = "Median of Means", title = "Estimateur MoM d'une loi exp(0.2)") +
   geom_text(x = 7, y = 0.491, label = "c_theo", color = "red", vjust = 0.5) +
   geom_text(x = i_values[which.min(abs(median_values - 0.5))]-1, y = 0.491, label = "c_opt", color = "green", vjust = 0.5) +
   theme_classic()
@@ -331,6 +333,8 @@ plot(x = x, y = y, type = "l", col = "blue", ylim = c(0, 40),
 
 
 ```{r}
+X1=rpareto(n = 1000, scale = 2.2, 3)
+
 median_of_means_opt2 <- function(X, alpha=0.025) {
   n=length(X)
   k <- (trunc(8*log(1/alpha)))
@@ -346,7 +350,7 @@ plot_intervalle <- function(X) {
   n <- length(X)
   k <- trunc(8 * log(1 / alpha))
   m <- n / k
-  sigma <- 1
+  sigma <- 10
   
   Y <- matrix(NA, nrow = 10000, ncol = 5)
   
@@ -358,7 +362,7 @@ plot_intervalle <- function(X) {
     
     taille=y_max-y_min
     
-    Y[i, ] <- c(hat_mu,y_min, y_max, taille, abs(hat_mu-1))
+    Y[i, ] <- c(hat_mu,y_min, y_max, taille, abs(hat_mu-10))
   }
   
   plot(Y[, 2], type = "l", ylim = range(Y), col = "blue", main = "Intervalles de confiance", xlab = "Index", ylab = "Valeurs")
@@ -367,13 +371,10 @@ plot_intervalle <- function(X) {
   Y=as.data.frame(Y)
   names(Y) <- c("MoM", "y_min", "y_max", "taille", "MoM-mean")
   print(Y)
-  print(sigma*sqrt((32*log(1/alpha))/n))
-  print(sum(Y[, 5] <=sigma*sqrt((32*log(1/alpha))/n)))
+  print(sigma*sqrt((2*log(1/alpha))/n))
+  print((sum(Y[, 5] <=sigma*sqrt((2*log(1/alpha))/n))/10000))
 }
-X1=rexp(n = 1000, rate=1)
-X2=rweibull(n = 1000, shape = 0.5)
 plot_intervalle(X1)
-plot_intervalle(X2)
 ```
 
 ```{r}
@@ -428,13 +429,13 @@ median_of_means_Minsker <- function(X, k) {
   if (k > n) {
     k <- ceiling(length(X) / 2)
   }
-  indic <- combn(X, trunc(n/k))
+  indic <- combn(X, k)
   moyennes <- apply(indic, 2, mean)
   return(median(moyennes))
 }
 
-X4 <- rexp(n = 20, rate = 1/2)
-result <- median_of_means_Minsker(X4, 3)
+X4 <- rexp(n = 30, rate = 0.1)
+result <- median_of_means_Minsker(X4, 7)
 print(result)
 
 
@@ -446,4 +447,113 @@ y <- sapply(x, function(k) median_of_means_Minsker(X4, k))
 plot(x = x, y = y, type = "b", xlab = "k", ylab = "Median of Means", main = "Median of Means suivant le nombre de blocks k")
 
 ```
+
+
+```{r}
+X1=rpareto(n = 1000, scale = 2.2, 3)
+
+median_of_means_opt3 <- function(X) {
+  n=length(X)
+  alpha=0.025
+  k=(trunc(8*log(1/alpha)))
+  m <- n/k
+  indic <- rep(1:k, each = m)
+  indic <- sample(indic)
+  moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
+  return(median(moyennes))
+}
+
+plot_intervalle2 <- function(X, sigma, mu, alpha = 0.025) {
+  n <- length(X)
+  c_values <- seq(sqrt(2), 4 * sqrt(2), by = 0.5)
+  
+  result <- numeric(length(c_values))
+  
+  for (i in 1:length(c_values)) {
+    c <- c_values[i]
+    k <- trunc(8 * log(1 / alpha))
+    m <- n / k
+
+    Y <- numeric(1000)
+    
+    for (j in 1:1000) {
+      hat_mu <- median_of_means_opt3(X)
+      interval_width <- sigma * c * sqrt(log(1 / alpha) / n)
+      Y[j] <- abs(hat_mu - mu) <= interval_width
+    }
+    
+    result[i] <- sum(Y) / length(Y)
+  }
+  
+  # Trouver les valeurs de c pour lesquelles la proportion est proche de 97.5%
+  c_optimal_index <- which.min(result >= 1 - alpha)
+  c_optimal <- c_values[c_optimal_index]
+  
+  # Calculer la proportion
+  proportion_within_interval <- result[c_optimal_index]
+  
+  print(paste("Valeur de c pour une proportion de 97.5% :", c_optimal))
+  print(proportion_within_interval)
+}
+
+plot_intervalle2(X1, 5.5, 8.2915, 0.025)
+```
+
+
+```{r}
+Z <- rpareto(1000, shape = 2.2, scale = 3)
+estimateur <- replicate(1000, median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3)))
+
+alpha <- 0.025
+mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
+n <- length(estimateur)
+sigma <- 8.22
+sup <- mu_MoM + sigma * sqrt(4.6 * log(1 / alpha) / n) 
+inf <- mu_MoM - sigma * sqrt(4.6 * log(1 / alpha) / n)
+
+count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+pourcentage <- count_in_intervalle / length(estimateur) * 100
+
+
+print(paste("Nombre de valeurs dans l'intervalle de confiance :", count_in_intervalle))
+print(paste("Pourcentage de valeurs dans l'intervalle de confiance :", pourcentage, "%"))
+
+
+plot(estimateur, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
+abline(h = sup, col = "red")
+abline(h = inf, col = "red")
+```
+
+
+```{r}
+pourcentages <- numeric(100)
+
+for (i in 1:100) {
+  Z <- rpareto(1000, shape = 2.2, scale = 3)
+  estimateur <- replicate(1000, median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3)))
+
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
+  n <- length(estimateur)
+  sigma <- 8.22
+  sup <- mu_MoM + sigma * sqrt(3.41 * log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(3.41 * log(1 / alpha) / n)
+
+  count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+  pourcentage <- count_in_intervalle / length(estimateur) * 100
+
+  pourcentages[i] <- pourcentage
+  ululu=sum(pourcentage==97.5)
+  ouloulou=sum(pourcentage>97.5)
+}
+
+hist(pourcentages, breaks=20, freq=T)
+
+print(paste("Pourcentages stockés :", pourcentages))
+print(paste("Nombre de poucentage égale à 97.5 : ", ululu))
+print(paste("Nombre de poucentage supérieur à 97.5 : ", ouloulou))
+
+```
+
+
 
