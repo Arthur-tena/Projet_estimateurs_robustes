@@ -100,7 +100,7 @@ On sait que pour une loi de student de ddl>1, l'espérance est nulle, c'est ce q
 ```{r}
 median_of_means_opt <- function(X, alpha=0.025) {
   n=length(X)
-  k <- (trunc(8*log(1/alpha)))
+  k <- trunc(8*log(1/alpha))
   m <- n/k
   indic <- rep(1:k, each = m)
   indic <- sample(indic)
@@ -450,7 +450,7 @@ plot(x = x, y = y, type = "b", xlab = "k", ylab = "Median of Means", main = "Med
 
 
 ```{r}
-X1=rpareto(n = 1000, scale = 2.2, 3)
+X1=rpareto(n = 10000, scale = 2.2, 3)
 
 median_of_means_opt3 <- function(X) {
   n=length(X)
@@ -462,6 +462,7 @@ median_of_means_opt3 <- function(X) {
   moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
   return(median(moyennes))
 }
+median_of_means_opt3(X1)
 
 plot_intervalle2 <- function(X, sigma, mu, alpha = 0.025) {
   n <- length(X)
@@ -526,9 +527,9 @@ abline(h = inf, col = "red")
 
 
 ```{r}
-pourcentages <- numeric(100)
-
-for (i in 1:100) {
+pourcentages <- numeric(400)
+ululu <- 0
+for (i in 1:400) {
   Z <- rpareto(1000, shape = 2.2, scale = 3)
   estimateur <- replicate(1000, median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3)))
 
@@ -536,24 +537,20 @@ for (i in 1:100) {
   mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
   n <- length(estimateur)
   sigma <- 8.22
-  sup <- mu_MoM + sigma * sqrt(3.41 * log(1 / alpha) / n) 
-  inf <- mu_MoM - sigma * sqrt(3.41 * log(1 / alpha) / n)
+  sup <- mu_MoM + sigma * sqrt(2.9 * log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(2.9 * log(1 / alpha) / n)
 
   count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
   pourcentage <- count_in_intervalle / length(estimateur) * 100
 
   pourcentages[i] <- pourcentage
-  ululu=sum(pourcentage==97.5)
-  ouloulou=sum(pourcentage>97.5)
+  if (96.5 <= pourcentage && pourcentage <= 98.5) {
+    ululu <- ululu + 1
+  }
 }
 
-hist(pourcentages, breaks=20, freq=T)
+hist(pourcentages, breaks=25, freq=T)
 
 print(paste("Pourcentages stockés :", pourcentages))
 print(paste("Nombre de poucentage égale à 97.5 : ", ululu))
-print(paste("Nombre de poucentage supérieur à 97.5 : ", ouloulou))
-
 ```
-
-
-
