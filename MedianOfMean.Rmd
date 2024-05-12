@@ -527,9 +527,9 @@ abline(h = inf, col = "red")
 
 
 ```{r}
-pourcentages <- numeric(400)
+pourcentages <- numeric(1000)
 ululu <- 0
-for (i in 1:400) {
+for (i in 1:1000) {
   Z <- rpareto(1000, shape = 2.2, scale = 3)
   estimateur <- replicate(1000, median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3)))
 
@@ -537,8 +537,8 @@ for (i in 1:400) {
   mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
   n <- length(estimateur)
   sigma <- 8.22
-  sup <- mu_MoM + sigma * sqrt(2.9 * log(1 / alpha) / n) 
-  inf <- mu_MoM - sigma * sqrt(2.9 * log(1 / alpha) / n)
+  sup <- mu_MoM + sigma * sqrt(2.83 * log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(2.83 * log(1 / alpha) / n)
 
   count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
   pourcentage <- count_in_intervalle / length(estimateur) * 100
