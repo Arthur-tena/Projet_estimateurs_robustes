@@ -496,13 +496,13 @@ plot_intervalle2 <- function(X, sigma, mu, alpha = 0.025) {
   print(paste("Valeur de c pour une proportion de 97.5% :", c_optimal))
   print(proportion_within_interval)
 }
-
-plot_intervalle2(X1, 5.5, 8.2915, 0.025)
 ```
 
 
 ```{r}
 Z <- rpareto(1000, shape = 2.2, scale = 3)
+
+
 estimateur <- replicate(1000, median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3)))
 
 alpha <- 0.025
@@ -527,6 +527,8 @@ abline(h = inf, col = "red")
 
 
 ```{r}
+time<- Sys.time()
+
 pourcentages <- numeric(1000)
 ululu <- 0
 for (i in 1:1000) {
@@ -537,8 +539,8 @@ for (i in 1:1000) {
   mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
   n <- length(estimateur)
   sigma <- 8.22
-  sup <- mu_MoM + sigma * sqrt(2.83 * log(1 / alpha) / n) 
-  inf <- mu_MoM - sigma * sqrt(2.83 * log(1 / alpha) / n)
+  sup <- mu_MoM + sigma * sqrt(3 * log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(3 * log(1 / alpha) / n)
 
   count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
   pourcentage <- count_in_intervalle / length(estimateur) * 100
@@ -549,8 +551,200 @@ for (i in 1:1000) {
   }
 }
 
+hist(pourcentages, breaks=25, freq=T, xlim = c(95,100) , ylim = c(500, 700))
+plot(estimateur, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
+abline(h = sup, col = "red")
+abline(h = inf, col = "red")
+
+print(paste("Pourcentages stockés :", pourcentages))
+print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+
+Sys.time()-time
+```
+
+```{r}
+pourcentages <- numeric(1000)
+ululu <- 0
+ouloulou <- 0
+for (i in 1:1000) {
+  Z <- rweibull(1000, shape = 0.5)
+  estimateur <- replicate(1000, median_of_means_opt3(rweibull(100, shape = 0.5)))
+
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(rweibull(100, shape = 0.5))
+  n <- length(estimateur)
+  sigma <- 4.69
+  sup <- mu_MoM + sigma * sqrt(12.2 * log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(12.2 * log(1 / alpha) / n)
+
+  count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+  pourcentage <- count_in_intervalle / length(estimateur) * 100
+
+  pourcentages[i] <- pourcentage
+  if (97 <= pourcentage && pourcentage <= 98) {
+    ululu <- ululu + 1
+  }
+  if (pourcentage > 98) {
+    ouloulou <- ouloulou + 1
+  }
+}
 hist(pourcentages, breaks=25, freq=T)
 
 print(paste("Pourcentages stockés :", pourcentages))
-print(paste("Nombre de poucentage égale à 97.5 : ", ululu))
+print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+print(paste("Nombre de valeurs supérieure à 98: ", ouloulou))
+
 ```
+
+
+```{r}
+time<- Sys.time()
+pourcentages <- numeric(1000)
+ululu <- 0
+
+for (i in 1:1000) {
+  Z <- rexp(1000, rate = 0.5)
+  estimateur <- replicate(1000, median_of_means_opt3(rexp(100, rate = 0.5)))
+
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(Z)
+  n <- length(estimateur)
+  sigma <- 2
+  sup <- mu_MoM + sigma * sqrt(24.3* log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(24.3* log(1 / alpha) / n)
+    
+    count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+    pourcentage <- count_in_intervalle / length(estimateur) * 100
+    
+    pourcentages[i] <- pourcentage
+    
+    if (96.5 <= pourcentage && pourcentage <= 98.5) {
+      ululu <- ululu + 1
+    }
+}
+
+hist(pourcentages, breaks=25, freq=T, xlim = c(95,100) )
+plot(estimateur, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
+abline(h = sup, col = "red")
+abline(h = inf, col = "red")
+
+print(paste("Pourcentages stockés :", pourcentages))
+print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+Sys.time()-time
+```
+
+
+```{r}
+pourcentages <- numeric(1000)
+ululu <- 0
+
+for (i in 1:1000) {
+  Z <- rpareto(1000, scale = 1, shape = 6)
+  estimateur <- replicate(1000, median_of_means_opt3(rpareto(1000, scale = 1, shape = 6)))
+
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(Z)
+  n <- length(estimateur)
+  sigma <- 0.27
+  sup <- mu_MoM + sigma * sqrt(3* log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(3* log(1 / alpha) / n)
+    
+    count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+    pourcentage <- count_in_intervalle / length(estimateur) * 100
+    
+    pourcentages[i] <- pourcentage
+    
+    if (96.5 <= pourcentage && pourcentage <= 98.5) {
+      ululu <- ululu + 1
+    }
+}
+
+hist(pourcentages, breaks=25, freq=T)
+
+print(paste("Pourcentages stockés :", pourcentages))
+print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+
+```
+
+
+
+```{r}
+time <-  Sys.time()
+pourcentages <- numeric(1000)
+ululu <- 0
+
+for (i in 1:1000) {
+  Z <- rlnorm(1000, meanlog = 0, sdlog = 2)
+  estimateur <- replicate(1000, median_of_means_opt3(rlnorm(1000, meanlog  = 0, sdlog  = 2)))
+
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(Z)
+  n <- length(estimateur)
+  sigma <- 54.1
+  sup <- mu_MoM + sigma * sqrt(3* log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(3* log(1 / alpha) / n)
+    
+    count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+    pourcentage <- count_in_intervalle / length(estimateur) * 100
+    
+    pourcentages[i] <- pourcentage
+    
+    if (96.5 <= pourcentage && pourcentage <= 98.5) {
+      ululu <- ululu + 1
+    }
+}
+
+
+hist(pourcentages, breaks=25, freq=T, xlim = c(95,100) )
+plot(estimateur, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
+abline(h = sup, col = "red")
+abline(h = inf, col = "red")
+
+Sys.time()-time
+```
+
+```{r}
+c_opt <- seq(from = 2, to = 7, by = 0.01)
+n <- 1000
+alpha <- 0.025
+sigma <- 8.22
+shape <- 2.2
+scale <- 3
+num_simulations <- 1000  # Nombre de simulations pour calculer le pourcentage
+
+# Initialiser les vecteurs
+sup <- numeric(length(c_opt))
+inf <- numeric(length(c_opt))
+pourcentage <- numeric(length(c_opt))
+
+# Boucle pour calculer les intervalles de confiance et les pourcentages
+for (i in 1:length(c_opt)) {
+  count_in_intervalle <- 0
+  
+  for (j in 1:num_simulations) {
+    Z <- rpareto(n, shape, scale)
+    estimateur <- replicate(1000, median_of_means_opt3(Z))
+    mu_MoM <- median_of_means_opt3(Z)
+    
+    sup[i] <- mu_MoM + sigma * sqrt(c_opt[i] * log(1 / alpha) / n) 
+    inf[i] <- mu_MoM - sigma * sqrt(c_opt[i] * log(1 / alpha) / n)
+    
+    count_in_intervalle <- count_in_intervalle + sum(estimateur >= inf[i] & estimateur <= sup[i])
+  }
+  
+  pourcentage[i] <- count_in_intervalle / (num_simulations * 1000) * 100
+}
+
+# Tracer les résultats
+plot(c_opt, pourcentage, type = "l", col = "blue", lwd = 2,
+     xlab = "Valeur de c_opt", ylab = "Pourcentage dans l'intervalle",
+     main = "Pourcentage dans l'intervalle de confiance en fonction de c_opt")
+abline(h = 97.5, col = "red", lty = 2, lwd = 2)
+#abline(v = c_opt[which.min(abs(pourcentage-97.5))])
+legend("bottomright", legend = "97.5%", col = "red", lty = 2, lwd = 2)
+
+# Sauvegarder le graphique
+dev.copy(png, filename = "c_opt.png")
+dev.off()
+```
+
