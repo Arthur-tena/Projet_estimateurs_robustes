@@ -539,8 +539,8 @@ for (i in 1:1000) {
   mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
   n <- length(estimateur)
   sigma <- 8.22
-  sup <- mu_MoM + sigma * sqrt(3 * log(1 / alpha) / n) 
-  inf <- mu_MoM - sigma * sqrt(3 * log(1 / alpha) / n)
+  sup <- mu_MoM + sigma * sqrt(2.83 * log(1 / alpha) / n) 
+  inf <- mu_MoM - sigma * sqrt(2.83 * log(1 / alpha) / n)
 
   count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
   pourcentage <- count_in_intervalle / length(estimateur) * 100
@@ -551,10 +551,11 @@ for (i in 1:1000) {
   }
 }
 
-hist(pourcentages, breaks=25, freq=T, xlim = c(95,100) , ylim = c(500, 700))
+hist(pourcentages, breaks=100, freq=T, xlim = c(95,100) , ylim = c(500, 700))
 plot(estimateur, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
 abline(h = sup, col = "red")
 abline(h = inf, col = "red")
+#estimateur
 
 print(paste("Pourcentages stockés :", pourcentages))
 print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
@@ -743,9 +744,7 @@ abline(h = 97.5, col = "red", lty = 2, lwd = 2)
 #abline(v = c_opt[which.min(abs(pourcentage-97.5))])
 legend("bottomright", legend = "97.5%", col = "red", lty = 2, lwd = 2)
 
-# Sauvegarder le graphique
-dev.copy(pdf, filename = "c_opt.pdf")
-dev.off()
+
 ```
 
 ```{r}
@@ -838,8 +837,8 @@ legend("bottomright", legend = c("97.5%","c_optimal"), col = c("red","green"), l
 print(paste("Pourcentages stockés :", paste(pourcentages, collapse = "%, ")))
 print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
 
-dev.copy(pdf, filename = "c_opt_pareto.pdf")
-dev.off()
+#dev.copy(pdf, filename = "c_opt_pareto.pdf")
+#dev.off()
 Sys.time()- time
 ```
 
@@ -947,7 +946,7 @@ print(paste("Pourcentages stockés :", paste(pourcentages, collapse = "%, ")))
 print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
 print(paste("Valeur de c_opt : ", c_opt[which.min(abs(pourcentages-97.5))]))
 
-dev.copy(pdf, filename = "c_opt_exp.pdf")
-dev.off()
+#dev.copy(pdf, filename = "c_opt_exp.pdf")
+#dev.off()
 Sys.time()- time
 ```
