@@ -539,10 +539,10 @@ for (i in 1:1000) {
   mu_MoM <- median_of_means_opt3(rpareto(100, shape = 2.2, scale = 3))
   n <- length(estimateur)
   sigma <- 8.22
-  sup <- mu_MoM + sigma * sqrt(2.83 * log(1 / alpha) / n) 
-  inf <- mu_MoM - sigma * sqrt(2.83 * log(1 / alpha) / n)
+  sup <- sigma * sqrt(6.51 * log(1 / alpha) / n) 
+  inf <- - sigma * sqrt(6.51 * log(1 / alpha) / n)
 
-  count_in_intervalle <- sum(estimateur >= inf & estimateur <= sup)
+  count_in_intervalle <- sum(estimateur-5.5 >= inf & estimateur-5.5 <= sup)
   pourcentage <- count_in_intervalle / length(estimateur) * 100
 
   pourcentages[i] <- pourcentage
@@ -550,15 +550,22 @@ for (i in 1:1000) {
     ululu <- ululu + 1
   }
 }
+estimateur-5.5
+hist(estimateur-5.5, xlim=c(inf-1, sup+1))
+abline(v = sup, col = "red")
+abline(v = inf, col = "red")
+
+sum(estimateur-5.5 <= inf)
 
 hist(pourcentages, breaks=100, freq=T, xlim = c(95,100) , ylim = c(500, 700))
-plot(estimateur, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
+plot(estimateur-5.5, type = "p", col = "blue", xlab = "Valeur de c", ylab = "MoM-mu", main = "Estimateur MoM", ylim=c(inf-1, sup+1))
+sup
 abline(h = sup, col = "red")
 abline(h = inf, col = "red")
 #estimateur
 
-print(paste("Pourcentages stockés :", pourcentages))
-print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+#print(paste("Pourcentages stockés :", pourcentages))
+#print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
 
 Sys.time()-time
 ```
