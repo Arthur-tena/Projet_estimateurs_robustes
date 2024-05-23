@@ -744,7 +744,7 @@ abline(h = 97.5, col = "red", lty = 2, lwd = 2)
 legend("bottomright", legend = "97.5%", col = "red", lty = 2, lwd = 2)
 
 # Sauvegarder le graphique
-dev.copy(png, filename = "c_opt.png")
+dev.copy(pdf, filename = "c_opt.pdf")
 dev.off()
 ```
 
@@ -791,7 +791,7 @@ Sys.time()-time
 
 ```{r}
 time <- Sys.time()
-c_opt <- seq(from = 2, to = 7, by = 0.01)
+c_opt <- seq(from = 2.5, to = 3, by = 0.005)
 mat <- matrix(NA, ncol = 1001, nrow = length(c_opt))  # Matrice pour stocker les résultats
 pourcentages <- numeric(length(c_opt))  # Vecteur pour stocker les pourcentages
 ululu <- 0  # Compteur pour les pourcentages dans l'intervalle souhaité
@@ -824,7 +824,61 @@ for (j in 1:length(c_opt)) {
 }
 
 # Tracer l'histogramme des pourcentages
-hist(pourcentages, breaks = 25, freq = TRUE)
+hist(pourcentages, breaks = 25, freq = TRUE, xlim=c(90,100))
+
+# Tracer le pourcentage en fonction des valeurs de c_opt
+plot(c_opt, pourcentages, type = "p", col = "blue", xlab = "Valeur de c", ylab = "Pourcentage", main = "Pourcentage en fonction de c", ylm= c(90,100))
+abline(h = 97.5, col = "red", lty = 2, lwd = 2)
+legend("bottomright", legend = "97.5%", col = "red", lty = 2, lwd = 2)
+
+abline(v = c_opt[which.min(abs(pourcentages-97.5))], col= "green", lty = 2, lwd = 2)
+legend("bottomright", legend = c("97.5%","c_optimal"), col = c("red","green"), lty = c(2,2), lwd = c(2,2))
+
+# Affichage des résultats
+print(paste("Pourcentages stockés :", paste(pourcentages, collapse = "%, ")))
+print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+
+dev.copy(pdf, filename = "c_opt_pareto.pdf")
+dev.off()
+Sys.time()- time
+```
+
+```{r}
+time <- Sys.time()
+c_opt <- seq(from = 2, to = 4, by = 0.01)
+mat <- matrix(NA, ncol = 1001, nrow = length(c_opt))  # Matrice pour stocker les résultats
+pourcentages <- numeric(length(c_opt))  # Vecteur pour stocker les pourcentages
+ululu <- 0  # Compteur pour les pourcentages dans l'intervalle souhaité
+
+# Remplissage de la première colonne de mat avec les valeurs de c_opt
+mat[, 1] <- c_opt
+
+# Boucle pour remplir la matrice et calculer les pourcentages
+for (j in 1:length(c_opt)) {
+  for (i in 1:1000) {
+    Z <- rlnorm(1000, meanlog  = 0, sdlog  = 2)
+    mat[j, i + 1] <- median_of_means_opt3(rlnorm(1000, meanlog  = 0, sdlog  = 2))
+  }
+  
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(rlnorm(1000, meanlog  = 0, sdlog  = 2))
+  n <- 1000
+  sigma <- 54.1
+  sup <- mu_MoM + sigma * sqrt(c_opt[j] * log(1 / alpha) / n)
+  inf <- mu_MoM - sigma * sqrt(c_opt[j] * log(1 / alpha) / n)
+  
+  count_in_intervalle <- sum(mat[j, -1] >= inf & mat[j, -1] <= sup)
+  pourcentage <- count_in_intervalle / 1000 * 100
+  
+  pourcentages[j] <- pourcentage
+  
+  if (96.5 <= pourcentage && pourcentage <= 98.5) {
+    ululu <- ululu + 1
+  }
+}
+
+# Tracer l'histogramme des pourcentages
+hist(pourcentages, breaks = 25, freq = TRUE, xlim=c(90,100))
 
 # Tracer le pourcentage en fonction des valeurs de c_opt
 plot(c_opt, pourcentages, type = "l", col = "blue", xlab = "Valeur de c", ylab = "Pourcentage", main = "Pourcentage en fonction de c")
@@ -838,8 +892,62 @@ legend("bottomright", legend = "97.5%", col = "red", lty = 2, lwd = 2)
 print(paste("Pourcentages stockés :", paste(pourcentages, collapse = "%, ")))
 print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
 
-dev.copy(png, filename = "c_opt.png")
+dev.copy(pdf, filename = "c_opt.pdf")
 dev.off()
 Sys.time()- time
 ```
 
+```{r}
+time <- Sys.time()
+c_opt <- seq(from = 15, to = 25, by = 0.05)
+mat <- matrix(NA, ncol = 1001, nrow = length(c_opt))  # Matrice pour stocker les résultats
+pourcentages <- numeric(length(c_opt))  # Vecteur pour stocker les pourcentages
+ululu <- 0  # Compteur pour les pourcentages dans l'intervalle souhaité
+
+# Remplissage de la première colonne de mat avec les valeurs de c_opt
+mat[, 1] <- c_opt
+
+# Boucle pour remplir la matrice et calculer les pourcentages
+for (j in 1:length(c_opt)) {
+  for (i in 1:1000) {
+    Z <- rexp(100, rate = 0.5)
+    mat[j, i + 1] <- median_of_means_opt3(rexp(100, rate = 0.5))
+  }
+  
+  alpha <- 0.025
+  mu_MoM <- median_of_means_opt3(rexp(100, rate = 0.5))
+  n <- 1000
+  sigma <- 2
+  sup <- mu_MoM + sigma * sqrt(c_opt[j] * log(1 / alpha) / n)
+  inf <- mu_MoM - sigma * sqrt(c_opt[j] * log(1 / alpha) / n)
+  
+  count_in_intervalle <- sum(mat[j, -1] >= inf & mat[j, -1] <= sup)
+  pourcentage <- count_in_intervalle / 1000 * 100
+  
+  pourcentages[j] <- pourcentage
+  
+  if (96.5 <= pourcentage && pourcentage <= 98.5) {
+    ululu <- ululu + 1
+  }
+}
+
+# Tracer l'histogramme des pourcentages
+hist(pourcentages, breaks = 25, freq = TRUE, xlim=c(90,100))
+
+# Tracer le pourcentage en fonction des valeurs de c_opt
+plot(c_opt, pourcentages, type = "p", col = "blue", xlab = "Valeur de c", ylab = "Pourcentage", main = "Pourcentage en fonction de c", ylim=c(90,100))
+abline(h = 97.5, col = "red", lty = 2, lwd = 2)
+legend("bottomright", legend = "97.5%", col = "red", lty = 2, lwd = 2)
+
+#abline(v = c_opt[which.min(pourcentages-97.5)], col= "green", lty = 2, lwd = 2)
+#legend("bottomright", legend = c("97.5%","c_optimal"), col = c("red","green"), lty = c(2,2), lwd = c(2,2))
+
+# Affichage des résultats
+print(paste("Pourcentages stockés :", paste(pourcentages, collapse = "%, ")))
+print(paste("Nombre de valeurs comprises entre 96.5% et 98.5% : ", ululu))
+print(paste("Valeur de c_opt : ", c_opt[which.min(abs(pourcentages-97.5))]))
+
+dev.copy(pdf, filename = "c_opt_exp.pdf")
+dev.off()
+Sys.time()- time
+```
