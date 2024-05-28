@@ -1,0 +1,264 @@
+---
+title: "MOOOOM"
+author: "Arthur TENA"
+date: "21/05/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Chargement du data frame
+
+```{r}
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+library("lubridate")
+library("stringr")
+data_mtp=read.csv("/users/arthurtena/Documents/data/RR_STAID002207.csv")
+replace_month_abbr <- function(month_abbr) {
+  month_names <- c("jan" = "Janvier", "feb" = "Février", "mar" = "Mars", "apr" = "Avril", "may" = "Mai", 
+                   "jun" = "Juin", "jul" = "Juillet", "aug" = "Août", "sep" = "Septembre", 
+                   "oct" = "Octobre", "nov" = "Novembre", "dec" = "Décembre")
+  return(month_names[month_abbr])
+}
+data_mtp <- data_mtp %>%
+  mutate(DATE = as.Date(as.character(DATE), format = "%Y%m%d"),
+         Month = month(DATE, label = TRUE, abbr = TRUE)) %>%
+  mutate(Month = replace_month_abbr(as.character(Month))) %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0)
+data_mtp
+```
+
+
+Fonction de Median of Mean
+```{r}
+median_of_means_opt3 <- function(X) {
+  n=length(X)
+  alpha=0.025
+  k=(trunc(8*log(1/alpha)))
+  m <- n/k
+  indic <- rep(1:k, each = m)
+  indic <- sample(indic)
+  moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
+  return(median(moyennes))
+}
+
+median_of_means <- function(X, k) {
+  if (k > length(X)) {
+    k <- ceiling(length(X) / 2)
+  }
+  indic <- rep(1:k, each = floor(length(X) / k))
+  indic <- sample(indic)
+  moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
+  return(median(moyennes))
+}
+
+median_of_means2 <- function(X, k, l) {
+  res <- replicate(l, median_of_means(X, k))
+  return(mean(res))
+}
+
+median_of_means_Minsker <- function(X, m, B = 1000) {
+  n <- length(X)
+  moyennes <- numeric(B)
+  
+  for (i in 1:B) {
+    sample_indices <- sample(n, m, replace = FALSE)
+    moyennes[i] <- mean(X[sample_indices])
+  }
+  
+  return(median(moyennes))
+}
+```
+
+```{r}
+# data frame de la pluie
+data_mtp_2909 =data_mtp %>% mutate(RR = RR * 0.1) %>% filter(RR > 0) %>% filter(str_detect(DATE, "09-29"))
+data_mtp_2909
+data_pluie_filter = data_mtp %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0 | (RR == 0 & runif(n()) < 0.10)) %>%
+  filter(str_detect(DATE, "09-29"))
+data_pluie_filter
+#A garder
+plot_2909 <- ggplot(data_mtp_2909, aes(x = RR)) + geom_density(fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées la journée du 29 septembre", x = "Précipitations (RR)", y = "Fréquence") + theme_classic()
+plot_2909
+
+#ggplot(data_pluie_filter, aes(x = RR)) + geom_density(binwidth = 0.1, fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées", x = "Précipitations (RR)", y = "Fréquence") +
+#  scale_y_log10() + theme_classic()
+
+ggsave(filename = "hist_precipitations2909.pdf", plot = plot_2909)
+```
+
+```{r}
+current_year <- year(Sys.Date())
+years_to_filter <- (current_year - 10):current_year
+
+
+data_mtp_september_Octobre_last_10_years <- data_mtp %>%
+  mutate(
+    Year = year(DATE),
+    Month = month(DATE, label = TRUE, abbr = FALSE)
+  ) %>%
+  filter(Year %in% years_to_filter & Month == c("septembre","Octobre"))
+
+
+data_mtp_september_last_10_years <- data_mtp %>%
+  mutate(
+    Year = year(DATE),
+    Month = month(DATE, label = TRUE, abbr = FALSE)
+  ) %>%
+  filter(Year %in% years_to_filter & Month == "septembre")
+
+plot_septembre_14_23 = ggplot(data_mtp_september_last_10_years, aes(x = RR)) + geom_density(fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées du mois de septembre des 10 dernières années", x = "Précipitations (RR)", y = "Fréquence") + theme_classic()
+#ggsave(filename = "hist_precipitations14_23.pdf", plot = plot_septembre_14_23)
+
+data_mtp_september_last_10_years_trimmed <- data_mtp %>%
+  mutate(
+    Year = year(DATE),
+    Month = month(DATE, label = TRUE, abbr = FALSE)
+  ) %>%
+  filter(Year %in% years_to_filter & Month == "septembre" & RR<100)
+ggplot(data_mtp_september_last_10_years_trimmed, aes(x = RR)) + geom_density(fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées et treemed du mois de septembre des 10 dernières années", x = "Précipitations (RR)", y = "Fréquence") + theme_classic()
+
+paste("Mean: ",mean(data_mtp_september_last_10_years[,"RR"]))
+paste("Treemed mean avec seuil=100: ",mean(data_mtp_september_last_10_years_trimmed[,"RR"]))
+paste("MoM k=15 : ",median_of_means(data_mtp_september_last_10_years[,"RR"],15))
+paste("MoM k=7 : ",median_of_means(data_mtp_september_last_10_years[,"RR"],7))
+paste("MoM k=20 : ",median_of_means(data_mtp_september_last_10_years[,"RR"],20))
+paste("MoM k=11 : ",median_of_means(data_mtp_september_last_10_years[,"RR"],11))
+paste("MoM k=15, l=50: ",median_of_means2(data_mtp_september_last_10_years[,"RR"],15,50))
+paste("MoM k=11, l=25: ",median_of_means2(data_mtp_september_last_10_years[,"RR"],11,25))
+paste("MoM opt: ",median_of_means_opt3(data_mtp_september_last_10_years[,"RR"]))
+paste("MoM Minsker: ",median_of_means_Minsker(data_mtp_september_last_10_years[,"RR"],7))
+```
+
+```{r}
+data_pluie_filte_sep_oc_jan <- data_mtp %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0, Month %in% c("Septembre", "Octobre", "Janvier"))
+
+violin=ggplot(data_pluie_filte_sep_oc_jan, aes(x = Month, y = RR, colour = Month)) +geom_violin()+geom_jitter(width=0.25, size=0.4) + labs(title = "Précipitations ajustées pour Septembre, Octobre et Janvier", x = "Mois", y = "Précipitations (RR)", colour="Mois") + scale_color_manual(values = c("Janvier" = "green", "Septembre" = "blue", "Octobre" = "red")) + theme_classic()
+violin
+#ggsave(filename = "plot_mois_mtp.pdf", plot = violin)
+
+data_pluie_filte_sep <- data_mtp %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0, Month == "sep")
+ggplot(data_pluie_filte_sep, aes(x = RR)) + geom_density(fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées la journée du 29 septembre", x = "Précipitations (RR)", y = "Fréquence") + theme_classic()
+median_of_means_opt3(data_pluie_filte_sep[,"RR"])
+mean(data_pluie_filte_sep[,"RR"])
+median_of_means(data_pluie_filte_sep[,"RR"],20)
+median_of_means2(data_pluie_filte_sep[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_filte_sep[,"RR"],17)
+
+
+data_pluie_filte_oct <- data_mtp %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0, Month == "oct")
+median_of_means_opt3(data_pluie_filte_oct[,"RR"])
+mean(data_pluie_filte_oct[,"RR"])
+median_of_means(data_pluie_filte_oct[,"RR"],20)
+median_of_means2(data_pluie_filte_oct[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_filte_oct[,"RR"],17)
+
+
+data_pluie_filte_jan <- data_mtp %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0, Month == "jan")
+median_of_means_opt3(data_pluie_filte_jan[,"RR"])
+mean(data_pluie_filte_jan[,"RR"])
+median_of_means(data_pluie_filte_jan[,"RR"],20)
+median_of_means2(data_pluie_filte_jan[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_filte_jan[,"RR"],17)
+```
+
+# Bastia
+
+```{r}
+data_bastia=read.csv("/users/arthurtena/Documents/data/RR_STAID000758B.csv")
+data_bastia$DATE <- ymd(data_bastia$DATE)
+data_bastia_trie <- data_bastia%>%
+  filter(RR > 0) %>%
+    mutate(RR = RR * 0.1) %>%
+  mutate(year = year(DATE)) %>%
+  mutate(age_group = cut(year, breaks = seq(from = min(year), to = max(year) + 20, by = 20), right = FALSE, labels = FALSE))
+
+plot_bastia =ggplot(data_bastia_trie, aes(x = as.factor(age_group), y = RR, colour=as.factor(age_group))) +
+  geom_violin(trim = FALSE) +geom_jitter(width=0.25, size=0.4)+
+  labs(x = "Tranches d'âge (20 ans)", y = "Valeur des précipitations", title = "Valeurs des précipitations par période de 20 ans" , colour = "Tranches de 20 ans") + scale_color_manual(values = c("1" = "blue","2"= "red", "3" = "green", "4" = "yellow")) +
+  theme_classic()
+plot_bastia
+#ggsave(filename = "plot_tranche_age_bastia.pdf", plot = plot_bastia)
+
+
+data_pluie_bastia1 <- data_bastia_trie %>%filter(age_group == "1")
+mean(data_pluie_bastia1[,"RR"])
+median_of_means_opt3(data_pluie_bastia1[,"RR"])
+median_of_means(data_pluie_bastia1[,"RR"],20)
+median_of_means2(data_pluie_bastia1[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_bastia1[,"RR"],17)
+
+data_pluie_bastia2 <- data_bastia_trie %>%filter(age_group == "2")
+mean(data_pluie_bastia2[,"RR"])
+median_of_means_opt3(data_pluie_bastia2[,"RR"])
+median_of_means(data_pluie_bastia2[,"RR"],20)
+median_of_means2(data_pluie_bastia2[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_bastia2[,"RR"],17)
+
+data_pluie_bastia3 <- data_bastia_trie %>%filter(age_group == "3")
+mean(data_pluie_bastia3[,"RR"])
+median_of_means_opt3(data_pluie_bastia3[,"RR"])
+median_of_means(data_pluie_bastia3[,"RR"],20)
+median_of_means2(data_pluie_bastia3[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_bastia3[,"RR"],20)
+
+data_pluie_bastia4 <- data_bastia_trie %>%filter(age_group == "4")
+mean(data_pluie_bastia4[,"RR"])
+median_of_means_opt3(data_pluie_bastia4[,"RR"])
+median_of_means(data_pluie_bastia4[,"RR"],20)
+median_of_means2(data_pluie_bastia4[,"RR"],43,50)
+median_of_means_Minsker(data_pluie_bastia4[,"RR"],17)
+```
+
+
+
+# Nantes
+
+```{r}
+data_nantes=read.csv("/users/arthurtena/Documents/data/RR_STAID000742 N.csv")
+nantes_intense = data_nantes %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 50)
+nantes_intense
+data_nantes_pluie= data_nantes %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0)
+ggplot(data_nantes_pluie, aes(x = RR)) + geom_histogram(binwidth = 0.1, fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées", x = "Précipitations (RR)", y = "Fréquence") + theme_classic()
+```
+
+# Lille
+
+```{r}
+data_lille=read.csv("/users/arthurtena/Documents/data/RR_STAID000737.csv")
+lille_intense = data_lille %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 50)
+lille_intense
+
+data_lille_suspecte <- data_lille %>% filter(Q_RR==1)
+data_lille_suspecte
+
+data_lille_pluie=data.frame(RR=data_lille$RR*0.1)
+data_lille_pluie <- data_lille_pluie %>% filter(RR >= 0)
+#subset(data_mtp_pluie, RR < 0)
+
+ggplot(data_lille_pluie, aes(x = RR)) + geom_histogram(binwidth = 0.1, fill = "blue", color = "black") + labs(title = "Histogramme des précipitations ajustées", x = "Précipitations (RR)", y = "Fréquence") + theme_classic()
+
+ggplot(data_lille_pluie, aes(x = RR)) + geom_density(fill = "blue", alpha = 0.5) + labs(title = "Densité des précipitations ajustées", x = "Précipitations (RR)", y = "Densité") + theme_classic()
+
+```
