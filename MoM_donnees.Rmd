@@ -18,7 +18,7 @@ library("tidyr")
 library("lubridate")
 library("stringr")
 data_mtp=read.csv("/users/arthurtena/Documents/data/RR_STAID002207.csv")
-replace_month_abbr <- function(month_abbr) {
+replace_month <- function(month_abbr) {
   month_names <- c("jan" = "Janvier", "feb" = "Février", "mar" = "Mars", "apr" = "Avril", "may" = "Mai", 
                    "jun" = "Juin", "jul" = "Juillet", "aug" = "Août", "sep" = "Septembre", 
                    "oct" = "Octobre", "nov" = "Novembre", "dec" = "Décembre")
@@ -36,9 +36,8 @@ data_mtp
 
 Fonction de Median of Mean
 ```{r}
-median_of_means_opt3 <- function(X) {
+median_of_means_opt3 <- function(X, alpha=0.025) {
   n=length(X)
-  alpha=0.025
   k=(trunc(8*log(1/alpha)))
   m <- n/k
   indic <- rep(1:k, each = m)
@@ -70,14 +69,13 @@ median_of_means_Minsker <- function(X, m, B = 1000) {
     sample_indices <- sample(n, m, replace = FALSE)
     moyennes[i] <- mean(X[sample_indices])
   }
-  
   return(median(moyennes))
 }
 ```
 
 ```{r}
 # data frame de la pluie
-data_mtp_2909 =data_mtp %>% mutate(RR = RR * 0.1) %>% filter(RR > 0) %>% filter(str_detect(DATE, "09-29"))
+data_mtp_2909 =data_mtp%>% filter(RR > 0) %>% filter(str_detect(DATE, "09-29"))
 data_mtp_2909
 data_pluie_filter = data_mtp %>%
   mutate(RR = RR * 0.1) %>%
@@ -134,6 +132,7 @@ paste("MoM k=11 : ",median_of_means(data_mtp_september_last_10_years[,"RR"],11))
 paste("MoM k=15, l=50: ",median_of_means2(data_mtp_september_last_10_years[,"RR"],15,50))
 paste("MoM k=11, l=25: ",median_of_means2(data_mtp_september_last_10_years[,"RR"],11,25))
 paste("MoM opt: ",median_of_means_opt3(data_mtp_september_last_10_years[,"RR"]))
+paste("MoM opt alpha=0.5: ",median_of_means_opt3(data_mtp_september_last_10_years[,"RR"], alpha = 0.5))
 paste("MoM Minsker: ",median_of_means_Minsker(data_mtp_september_last_10_years[,"RR"],7))
 ```
 

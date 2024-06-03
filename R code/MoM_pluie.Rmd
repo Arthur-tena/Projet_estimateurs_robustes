@@ -1,0 +1,102 @@
+---
+title: "MoM appliquée à des jeux de données"
+author: "Arthur TENA"
+date: "6/3/2024"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Chargement des jeux de données et des packages 
+
+## Chargement des packages :
+
+```{r, echo=F}
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+library("lubridate")
+library("stringr")
+```
+
+## Chargement des jeux de données :
+
+```{r, echo=F}
+data_mtp=read.csv("../data/RR_STAID002207.csv")
+data_bastia=read.csv("../data/RR_STAID000758B.csv")
+data_lille=read.csv("../data/RR_STAID000737.csv")
+data_nantes=read.csv("../data/RR_STAID000742 N.csv")
+```
+
+# Fonctions de l'estimateur MoM :
+
+```{r}
+MoM_k <- function(X, k) {
+  if (k > length(X)) {
+    k <- ceiling(length(X) / 2)
+  }
+  indic <- rep(1:k, each = floor(length(X) / k))
+  indic <- sample(indic)
+  moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
+  return(median(moyennes))
+}
+
+MoM_rep <- function(X, k, l) {
+  res <- replicate(l, median_of_means(X, k))
+  return(mean(res))
+}
+
+MoM_th <- function(X, alpha=0.025) {
+  n=length(X)
+  k=(trunc(8*log(1/alpha)))
+  m <- n/k
+  indic <- rep(1:k, each = m)
+  indic <- sample(indic)
+  moyennes <- sapply(1:k, function(block) mean(X[indic == block]))
+  return(median(moyennes))
+}
+
+MoM_Minsker <- function(X, m, B = 1000) {
+  n <- length(X)
+  moyennes <- numeric(B)
+  
+  for (i in 1:B) {
+    sample_indices <- sample(n, m, replace = FALSE)
+    moyennes[i] <- mean(X[sample_indices])
+  }
+  return(median(moyennes))
+}
+```
+
+
+# Application au jeux de donnnées :
+
+## Ville de Montpellier :
+
+```{r, echo=F}
+# Fonction pour mettre le mois sous forme de mots
+replace_month <- function(month_abbr) {
+  month_names <- c("jan" = "Janvier", "feb" = "Février", "mar" = "Mars", "apr" = "Avril", "may" = "Mai", 
+                   "jun" = "Juin", "jul" = "Juillet", "aug" = "Août", "sep" = "Septembre", 
+                   "oct" = "Octobre", "nov" = "Novembre", "dec" = "Décembre")
+  return(month_names[month_abbr])
+}
+
+#Modification du data_frame pour avoir uniquement les jours de pluie et en convertissant les précipitations en mm/m^2
+
+data_mtp <- data_mtp %>%
+  mutate(DATE = as.Date(as.character(DATE), format = "%Y%m%d"),
+         Month = month(DATE, label = TRUE, abbr = TRUE)) %>%
+  mutate(Month = replace_month(as.character(Month))) %>%
+  mutate(RR = RR * 0.1) %>%
+  filter(RR > 0)
+data_mtp
+```
+
+```{r}
+data_pluie_filte_sep_oc_jan <- data_mtp %>% filter(Month %in% c("Septembre", "Octobre", "Janvier"))
+ggplot(data_pluie_filte_sep_oc_jan, aes(x = Month, y = RR, colour = Month)) +geom_violin()+geom_jitter(width=0.25, size=0.4) + labs(title = "Précipitations ajustées pour Septembre, Octobre et Janvier", x = "Mois", y = "Précipitations (RR)", colour="Mois") + scale_color_manual(values = c("Janvier" = "green", "Septembre" = "blue", "Octobre" = "red")) + theme_classic()
+```
+
